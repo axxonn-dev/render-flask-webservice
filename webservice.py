@@ -1,9 +1,10 @@
-from flask import Flask, request, jsonify, render_template_string
+from flask import Flask, request, jsonify, render_template_string, make_response
 import re
 import os
+import json
 
 app = Flask(__name__)
-latest_tokens = []  # Variable global para mostrar en HTML
+latest_tokens = []  # Últimos tokens procesados
 
 @app.route("/tokenize", methods=["POST"])
 def tokenize():
@@ -26,10 +27,18 @@ def show_tokens_html():
             <li>{{ token }}</li>
             {% endfor %}
         </ul>
+        <a href="/download">Descargar JSON</a>
     </body>
     </html>
     """
     return render_template_string(html, tokens=latest_tokens)
+
+@app.route("/download", methods=["GET"])
+def download_json():
+    response = make_response(json.dumps({"tokens": latest_tokens}, indent=2))
+    response.headers.set("Content-Type", "application/json")
+    response.headers.set("Content-Disposition", "attachment", filename="tokens.json")
+    return response
 
 def simple_tokenize(text):
     return re.findall(r'\b\w+\b', text.lower())
